@@ -1,6 +1,6 @@
 {
   "name": "pythoness",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Check how pythonic a Github user is.",
   "main": "index.js",
   "bin": {
