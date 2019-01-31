@@ -10,7 +10,7 @@
 
 :heavy_exclamation_mark:
 :heavy_exclamation_mark:
-**Do NOT judge any person, oragnization, or entity based on how pythonic they are/it is. Or not pythonic.**
+**DO NOT judge any one based on how pythonic/a-pythonic they are/it is.**
 :heavy_exclamation_mark:
 :heavy_exclamation_mark:
 
@@ -18,7 +18,10 @@
 
 ```sh
 npm i -g pythoness
-pythoness b1f6c1c4 # How Pythonic I am?
+# Generate a token at https://github.com/settings/tokens
+echo the-token > ~/.pythoness
+pythoness             # Check your daily Pythoness
+pythoness b1f6c1c4    # How Pythonic another user is?
 ```
 
 ## Installation
@@ -29,7 +32,27 @@ $ npm install --global pythoness
 ## Usage
 
 ```
-pythoness.js [<who>]
+pythoness [<who>]
+
+Check pythoness of a Github user
+
+Commands:
+  pythoness check [<who>]  Check pythoness of a Github user            [default]
+
+Positionals:
+  who  Github username                                                  [string]
+
+Options:
+  --version        Show version number                                 [boolean]
+  --token-file     Github token file for private repo access, see
+                   https://github.com/settings/tokens                   [string]
+  -t, --token      Github token for private repo access, see
+                   https://github.com/settings/tokens                   [string]
+  --public         Ignore all private repos (so a token is unnecessary)[boolean]
+  --help           Show help                                           [boolean]
+  -s, --self       Check their own repos               [boolean] [default: true]
+  -f, --following  Check following's repos (depth=1)   [boolean] [default: true]
+  -F, --followers  Check followers' repos (depth=1)    [boolean] [default: true]
 ```
 
 ## Legal

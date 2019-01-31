@@ -165,13 +165,13 @@ module.exports = yargRoot
         alias: 'following',
         describe: 'Check following\'s repos (depth=1)',
         type: 'boolean',
-        default: false,
+        default: true,
       })
       .option('F', {
         alias: 'followers',
         describe: 'Check followers\' repos (depth=1)',
         type: 'boolean',
-        default: false,
+        default: true,
       })
       .positional('who', {
         describe: 'Github username',
