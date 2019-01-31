@@ -154,7 +154,7 @@ class Pythoness {
     if (following) {
       const fos = await this.getFollowing({ user });
       const stats = await Promise.all(fos.map(({ login }) =>
-        this.userPythoness({ user: login }, { self: true })));
+        this.userPythoness({ publicOnly: true, user: login }, { self: true })));
       res.following = {};
       fos.forEach(({ login }, i) => {
         res.following[login] = stats[i];
@@ -166,7 +166,7 @@ class Pythoness {
     if (followers) {
       const fos = await this.getFollowers({ user });
       const stats = await Promise.all(fos.map(({ login }) =>
-        this.userPythoness({ user: login }, { self: true })));
+        this.userPythoness({ publicOnly: true, user: login }, { self: true })));
       res.followers = {};
       fos.forEach(({ login }, i) => {
         res.followers[login] = stats[i];
