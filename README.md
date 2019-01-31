@@ -53,6 +53,7 @@ Options:
   --public         Ignore all private repos                            [boolean]
   --help           Show help                                           [boolean]
   -s, --self       Check their own repos               [boolean] [default: true]
+  -S, --star       Include starred repos               [boolean] [default: true]
   -f, --following  Check following's repos (depth=1)   [boolean] [default: true]
   -F, --followers  Check followers' repos (depth=1)    [boolean] [default: true]
 ```
@@ -78,10 +79,11 @@ First, a repo is assigned senate and the house seats, separatedly, based on the 
 
 | type | Senate seats | The House seats |
 | --- | --- | --- |
-| empty, source | 100 | 0 |
-| empty, fork | 1 | 0 |
-| non-empty, source | 1000 | Number of total code bytes |
-| non-empty, fork | 20 | 0 |
+| owner, empty, source | 100 | 0 |
+| owner, empty, fork | 1 | 0 |
+| owner, non-empty, source | 1000 | Number of total code bytes |
+| owner, non-empty, fork | 50 | 0 |
+| non-owner, starred | 10 | 0 |
 
 Then, senate and the house will "vote", or calculate weighted arithmetic average.
 Finally, the "congress" average is defined as

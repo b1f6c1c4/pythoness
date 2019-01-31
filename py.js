@@ -1,3 +1,21 @@
+/*
+ * pythoness
+ * Copyright (C) 2019 b1f6c1c4
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
 const axios = require('axios');
 const { TaskQueue } = require('cwait');
 const debug = require('debug')('pythoness');
@@ -83,7 +101,15 @@ class Pythoness {
   async getPrivateRepos() {
     const { data } = await this.run({
       method: 'get',
-      url: `/user/repos?visibility=all&affiliation=owner&sort=pushed`,
+      url: '/user/repos?visibility=all&affiliation=owner&sort=pushed',
+    });
+    return data;
+  }
+
+  async getPrivateStarRepos() {
+    const { data } = await this.run({
+      method: 'get',
+      url: '/user/starred',
     });
     return data;
   }
@@ -96,6 +122,14 @@ class Pythoness {
     return data;
   }
 
+  async getPublicStarRepos({ user }) {
+    const { data } = await this.run({
+      method: 'get',
+      url: `/users/${user}/starred`,
+    });
+    return data;
+  }
+
   async getLanguages({ user, repo }) {
     const { data } = await this.run({
       method: 'get',
@@ -104,7 +138,7 @@ class Pythoness {
     return data;
   }
 
-  async repoPythoness({ user }, { name, fork }) {
+  async repoPythoness({ user }, { name, fork }, { star }) {
     let langs;
     try {
       langs = await this.getLanguages({ user, repo: name });
@@ -128,11 +162,11 @@ class Pythoness {
     } else {
       pythoness = 1 - Math.exp(1 + crit / (pythoness - crit));
     }
-    debug({ user, name, fork, langs, pythoness, pyBytes, h });
-    return { pythoness, s: fork ? 20 : 1000, h: fork ? 0 : h };
+    debug({ user, name, fork, star, langs, pythoness, pyBytes, h });
+    return { pythoness, s: star ? 10 : fork ? 50 : 1000, h: star ? 0 : fork ? 0 : h };
   }
 
-  async userPythoness({ publicOnly, user }, { self, following, followers }) {
+  async userPythoness({ publicOnly, user }, { self, star, following, followers }) {
     const memoizable = publicOnly && self && !following && !followers;
     if (memoizable && this.memoize[user]) {
       return this.memoize[user];
@@ -140,17 +174,29 @@ class Pythoness {
     const todo = [];
     if (self) {
       todo.push((async () => {
-        let repos;
+        let repos, stars;
         if (!publicOnly) {
-          repos = await this.getPrivateRepos();
+          [repos, stars] = await Promise.all([
+            this.getPrivateRepos(),
+            star ? this.getPrivateStarRepos() : [],
+          ]);
         } else {
-          repos = await this.getPublicRepos({ user });
+          [repos, stars] = await Promise.all([
+            this.getPublicRepos({ user }),
+            star ? this.getPublicStarRepos({ user }) : [],
+          ]);
         }
-        const stats = await Promise.all(repos.map((r) =>
-          this.repoPythoness({ user }, r)));
-        const ret = { stat: congress(stats), repos: {} };
+        stars = stars.filter((r) => r.owner.login !== user);
+        const [rstats, sstats] = await Promise.all([
+          Promise.all(repos.map((r) => this.repoPythoness({ user }, r, { star: false }))),
+          Promise.all(stars.map((r) => this.repoPythoness({ user: r.owner.login }, r, { star: true }))),
+        ]);
+        const ret = { stat: congress(rstats.concat(sstats)), repos: {}, stars: {} };
         repos.forEach(({ name }, i) => {
-          ret.repos[name] = stats[i];
+          ret.repos[name] = rstats[i];
+        });
+        stars.forEach(({ name, owner: { login } }, i) => {
+          ret.stars[`${login}/${name}`] = sstats[i];
         });
         return { pythoness: ret.stat.pythoness, self: ret };
       })());

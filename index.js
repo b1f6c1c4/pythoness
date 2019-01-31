@@ -38,7 +38,7 @@ const readToken = ({ token, tokenFile }) => {
   }
 }
 
-const runCheck = async ({ public, who, self, following, followers }, token) => {
+const runCheck = async ({ public, who, self, star, following, followers }, token) => {
   const py = new Pythoness({ token });
   const me = await py.getMe();
   if (!who) {
@@ -52,8 +52,8 @@ const runCheck = async ({ public, who, self, following, followers }, token) => {
   } else if (public === undefined) {
     public = false;
   }
-  debug({ public, who, self, following, followers });
-  const res = await py.userPythoness({ user: who, publicOnly: public }, { self, following, followers });
+  debug({ public, who, self, star, following, followers });
+  const res = await py.userPythoness({ user: who, publicOnly: public }, { self, star, following, followers });
   console.log('='.repeat(110));
   console.log(`Pythoness Report for ${who}`);
   if (self) {
@@ -74,6 +74,24 @@ const runCheck = async ({ public, who, self, following, followers }, token) => {
       ]);
     }
     console.log(tbl.toString());
+    if (star) {
+      console.log('Stars:');
+      const tbl = new Table({
+        chars: {'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': ''},
+        head: ['Repo', 'Pythoness', 'Senate Seats', 'The House Seats'],
+        colWidths: [42, 25, 15, 17],
+      });
+      for (const r in res.self.stars) {
+        const { pythoness, s, h } = res.self.stars[r];
+        tbl.push([
+          r,
+          pythoness,
+          s,
+          h,
+        ]);
+      }
+      console.log(tbl.toString());
+    }
     console.log(`  Senate votes: ${res.self.stat.x} House votes: ${res.self.stat.y}`);
     console.log(`  Self pythoness: ${res.self.stat.pythoness}`);
   }
@@ -145,6 +163,12 @@ module.exports = yargRoot
       .option('s', {
         alias: 'self',
         describe: 'Check their own repos',
+        type: 'boolean',
+        default: true,
+      })
+      .option('S', {
+        alias: 'star',
+        describe: 'Include starred repos',
         type: 'boolean',
         default: true,
       })
