@@ -29,7 +29,7 @@ $ npm install --global pythoness
 ## Usage
 
 ```
-pythoness.js <who> [<repo>...]
+pythoness.js [<who>]
 ```
 
 ## Legal
