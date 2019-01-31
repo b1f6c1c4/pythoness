@@ -57,6 +57,58 @@ Options:
   -F, --followers  Check followers' repos (depth=1)    [boolean] [default: true]
 ```
 
+## FAQ
+
+### Why this program is written in JavaScript, not Python?
+
+Because of neutrality of accounting.
+
+### How Pythoness calculated?
+
+#### Pythoness of a single repo
+
+<img src="https://latex.codecogs.com/gif.latex?1-\exp\left(1+\frac{2/3}{\lambda-2/3}\right)" />
+
+where <img src="https://latex.codecogs.com/gif.latex?\lambda" /> is the ratio of Python bytes among all code bytes (the proportion of Python blue in the Github webpage).
+
+#### Self-Pythoness of an user
+
+Self-Pythoness of an user is defined to be the "congress" average of their repos' Pythoness.
+First, a repo is assigned senate and the house seats, separatedly, based on the following rules:
+
+| type | Senate seats | The House seats |
+| --- | --- | --- |
+| empty, source | 100 | 0 |
+| empty, fork | 1 | 0 |
+| non-empty, source | 1000 | Number of total code bytes |
+| non-empty, fork | 20 | 0 |
+
+Then, senate and the house will "vote", or calculate weighted arithmetic average.
+Finally, the "congress" average is defined as
+
+<img src="https://latex.codecogs.com/gif.latex?\sqrt{\frac{\text{Senate}^2+\text{House}^2}{2}}" />
+
+#### Following-Pythoness of an user
+
+First, all users followed by the targeted user will be enumerated and have their self-pythoness calculated.
+Next, each one is assigned senate and the house seats, separatedly, based on the following rules:
+
+| type | Senate seats | The House seats |
+| --- | --- | --- |
+| has written at least one byte code | 1000 | Number of total code bytes |
+| has not writeen any code | 10 | 0 |
+
+Then follow the same procedure as above.
+
+#### Followers-Pythoness of an user
+
+All users following the targeted user will be enumerated and have their self-pythoness calculated.
+The same procedure as above applies.
+
+#### Final Pythoness of an user
+
+It's defined as the RMS (root-mean-square) of their self-, following-, followers- Pythoness (whichever enabled in the command line).
+
 ## Legal
 
 This repo is licensed with GNU AGPLv3 or later.
