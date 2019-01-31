@@ -40,6 +40,7 @@ class Pythoness {
     });
     this.queue = new TaskQueue(Promise, 32);
     this.run = this.queue.wrap(this.run.bind(this));
+    this.memoize = {};
   }
 
   run(cfg) {
@@ -132,55 +133,63 @@ class Pythoness {
   }
 
   async userPythoness({ publicOnly, user }, { self, following, followers }) {
-    const res = {};
-    let final = 0, nFinal = 0;
+    const memoizable = publicOnly && self && !following && !followers;
+    if (memoizable && this.memoize[user]) {
+      return this.memoize[user];
+    }
+    const todo = [];
     if (self) {
-      let repos;
-      if (!publicOnly) {
-        repos = await this.getPrivateRepos();
-      } else {
-        repos = await this.getPublicRepos({ user });
-      }
-      const stats = await Promise.all(repos.map((r) =>
-        this.repoPythoness({ user }, r)));
-      res.self = {};
-      repos.forEach(({ name }, i) => {
-        res.self[name] = stats[i];
-      });
-      res.selfStat = congress(stats);
-      final += res.selfStat.pythoness ** 2;
-      nFinal++;
+      todo.push((async () => {
+        let repos;
+        if (!publicOnly) {
+          repos = await this.getPrivateRepos();
+        } else {
+          repos = await this.getPublicRepos({ user });
+        }
+        const stats = await Promise.all(repos.map((r) =>
+          this.repoPythoness({ user }, r)));
+        const ret = { stat: congress(stats), repos: {} };
+        repos.forEach(({ name }, i) => {
+          ret.repos[name] = stats[i];
+        });
+        return { pythoness: ret.stat.pythoness, self: ret };
+      })());
     }
     if (following) {
-      const fos = await this.getFollowing({ user });
-      const stats = await Promise.all(fos.map(({ login }) =>
-        this.userPythoness({ publicOnly: true, user: login }, { self: true })));
-      res.following = {};
-      fos.forEach(({ login }, i) => {
-        res.following[login] = stats[i];
-      });
-      res.followingStat = congress(stats);
-      final += res.followingStat.pythoness ** 2;
-      nFinal++;
+      todo.push((async () => {
+        const fos = await this.getFollowing({ user });
+        const stats = await Promise.all(fos.map(({ login }) =>
+          this.userPythoness({ publicOnly: true, user: login }, { self: true })));
+        const ret = { stat: congress(stats), users: {} };
+        fos.forEach(({ login }, i) => {
+          ret.users[login] = stats[i];
+        });
+        return { pythoness: ret.stat.pythoness, following: ret };
+      })());
     }
     if (followers) {
-      const fos = await this.getFollowers({ user });
-      const stats = await Promise.all(fos.map(({ login }) =>
-        this.userPythoness({ publicOnly: true, user: login }, { self: true })));
-      res.followers = {};
-      fos.forEach(({ login }, i) => {
-        res.followers[login] = stats[i];
-      });
-      res.followersStat = congress(stats);
-      final += res.followersStat.pythoness ** 2;
-      nFinal++;
+      todo.push((async () => {
+        const fos = await this.getFollowers({ user });
+        const stats = await Promise.all(fos.map(({ login }) =>
+          this.userPythoness({ publicOnly: true, user: login }, { self: true })));
+        const ret = { stat: congress(stats), users: {} };
+        fos.forEach(({ login }, i) => {
+          ret.users[login] = stats[i];
+        });
+        return { pythoness: ret.stat.pythoness, followers: ret };
+      })());
     }
-    res.pythoness = Math.sqrt(final / nFinal);
+    const results = await Promise.all(todo);
+    const res = results.reduce((p, c) => Object.assign(p, c), {});
+    res.pythoness = Math.sqrt(results.reduce((p, c) => p + c.pythoness ** 2, 0) / results.length);
     if (self) {
-      res.h = res.selfStat.h;
-      res.s = res.selfStat.h ? 1000 : 10;
+      res.h = res.self.stat.h;
+      res.s = res.self.stat.h ? 1000 : 10;
     }
     debug({ pythoness: res.pythoness, s: res.s, h: res.h });
+    if (memoizable) {
+      this.memoize[user] = res;
+    }
     return res;
   }
 }

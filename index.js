@@ -64,8 +64,8 @@ const runCheck = async ({ public, who, self, following, followers }, token) => {
       head: ['Repo', 'Pythoness', 'Senate Seats', 'The House Seats'],
       colWidths: [42, 25, 15, 17],
     });
-    for (const r in res.self) {
-      const { pythoness, s, h } = res.self[r];
+    for (const r in res.self.repos) {
+      const { pythoness, s, h } = res.self.repos[r];
       tbl.push([
         r,
         pythoness,
@@ -74,8 +74,8 @@ const runCheck = async ({ public, who, self, following, followers }, token) => {
       ]);
     }
     console.log(tbl.toString());
-    console.log(`  Senate votes: ${res.selfStat.x} House votes: ${res.selfStat.y}`);
-    console.log(`  Self pythoness: ${res.selfStat.pythoness}`);
+    console.log(`  Senate votes: ${res.self.stat.x} House votes: ${res.self.stat.y}`);
+    console.log(`  Self pythoness: ${res.self.stat.pythoness}`);
   }
   if (following) {
     console.log('='.repeat(110));
@@ -85,8 +85,8 @@ const runCheck = async ({ public, who, self, following, followers }, token) => {
       head: ['User', 'Pythoness', 'Senate Seats', 'The House Seats'],
       colWidths: [42, 25, 15, 17],
     });
-    for (const r in res.following) {
-      const { pythoness, s, h } = res.following[r];
+    for (const r in res.following.users) {
+      const { pythoness, s, h } = res.following.users[r];
       tbl.push([
         r,
         pythoness,
@@ -95,8 +95,8 @@ const runCheck = async ({ public, who, self, following, followers }, token) => {
       ]);
     }
     console.log(tbl.toString());
-    console.log(`  Senate votes: ${res.followingStat.x} House votes: ${res.followingStat.y}`);
-    console.log(`  Following pythoness: ${res.followingStat.pythoness}`);
+    console.log(`  Senate votes: ${res.following.stat.x} House votes: ${res.following.stat.y}`);
+    console.log(`  Following pythoness: ${res.following.stat.pythoness}`);
   }
   if (followers) {
     console.log('='.repeat(110));
@@ -106,8 +106,8 @@ const runCheck = async ({ public, who, self, following, followers }, token) => {
       head: ['User', 'Pythoness', 'Senate Seats', 'The House Seats'],
       colWidths: [42, 25, 15, 17],
     });
-    for (const r in res.followers) {
-      const { pythoness, s, h } = res.followers[r];
+    for (const r in res.followers.users) {
+      const { pythoness, s, h } = res.followers.users[r];
       tbl.push([
         r,
         pythoness,
@@ -116,8 +116,8 @@ const runCheck = async ({ public, who, self, following, followers }, token) => {
       ]);
     }
     console.log(tbl.toString());
-    console.log(`  Senate votes: ${res.followersStat.x} House votes: ${res.followersStat.y}`);
-    console.log(`  Following pythoness: ${res.followersStat.pythoness}`);
+    console.log(`  Senate votes: ${res.followers.stat.x} House votes: ${res.followers.stat.y}`);
+    console.log(`  Following pythoness: ${res.followers.stat.pythoness}`);
   }
   console.log('='.repeat(110));
   console.log(`The Final Pythoness of ${who} is: ${res.pythoness}`);
