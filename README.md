@@ -45,10 +45,10 @@ Positionals:
 
 Options:
   --version        Show version number                                 [boolean]
-  --token-file     Github token file for private repo access, see
+  --token-file     Github token file for full control of private repos, see
                    https://github.com/settings/tokens
                                               [string] [default: "~/.pythoness"]
-  -t, --token      Github token for private repo access, see
+  -t, --token      Github token for full control of private repos, see
                    https://github.com/settings/tokens                   [string]
   --public         Ignore all private repos                            [boolean]
   --help           Show help                                           [boolean]

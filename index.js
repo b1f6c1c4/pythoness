@@ -126,13 +126,13 @@ const runCheck = async ({ public, who, self, following, followers }, token) => {
 module.exports = yargRoot
   .strict()
   .option('token-file', {
-    describe: 'Github token file for private repo access, see https://github.com/settings/tokens',
+    describe: 'Github token file for full control of private repos, see https://github.com/settings/tokens',
     default: path.join(os.homedir(), '.pythoness'),
     type: 'string',
   })
   .option('t', {
     alias: 'token',
-    describe: 'Github token for private repo access, see https://github.com/settings/tokens',
+    describe: 'Github token for full control of private repos, see https://github.com/settings/tokens',
     type: 'string',
   })
   .option('public', {
