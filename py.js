@@ -178,8 +178,9 @@ class Pythoness {
     res.pythoness = Math.sqrt(final / nFinal);
     if (self) {
       res.h = res.selfStat.h;
+      res.s = res.selfStat.s;
     }
-    debug({ pythoness: res.pythoness, h: res.h });
+    debug({ pythoness: res.pythoness, s: res.s, h: res.h });
     return res;
   }
 }

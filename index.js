@@ -76,7 +76,7 @@ const runCheck = async ({ who, self, following, followers }, token) => {
     const tbl = new Table({
       chars: {'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': ''},
       head: ['Repo', 'Pythoness', 'Senate Seats', 'The House Seats'],
-      colWidths: [37, 25, 15, 17],
+      colWidths: [42, 25, 15, 17],
     });
     for (const r in res.self) {
       const { pythoness, s, h } = res.self[r];
@@ -97,7 +97,7 @@ const runCheck = async ({ who, self, following, followers }, token) => {
     const tbl = new Table({
       chars: {'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': ''},
       head: ['User', 'Pythoness', 'Senate Seats', 'The House Seats'],
-      colWidths: [37, 25, 15, 17],
+      colWidths: [42, 25, 15, 17],
     });
     for (const r in res.following) {
       const { pythoness, s, h } = res.following[r];
@@ -118,7 +118,7 @@ const runCheck = async ({ who, self, following, followers }, token) => {
     const tbl = new Table({
       chars: {'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': ''},
       head: ['User', 'Pythoness', 'Senate Seats', 'The House Seats'],
-      colWidths: [37, 25, 15, 17],
+      colWidths: [42, 25, 15, 17],
     });
     for (const r in res.followers) {
       const { pythoness, s, h } = res.followers[r];
@@ -138,6 +138,7 @@ const runCheck = async ({ who, self, following, followers }, token) => {
 }
 
 module.exports = yargRoot
+  .strict()
   .option('token-file', {
     describe: 'Github token file for private repo access, see https://github.com/settings/tokens',
     type: 'string',
