@@ -3,19 +3,19 @@ const { TaskQueue } = require('cwait');
 const debug = require('debug')('pythoness');
 
 const congress = (stats) => {
-  let { x, y, nb } = stats.reduce(({ x, y, nb }, { pythoness, totalBytes }) =>
-    ({ x: x + pythoness, y: y + pythoness * totalBytes, nb: nb + totalBytes }), {
-      x: 0, y: 0, nb: 0,
+  let { x, y, ns, nh } = stats.reduce(({ x, y, ns, nh }, { pythoness, s, h }) =>
+    ({ x: x + pythoness * s, y: y + pythoness * h, ns: ns + s, nh: nh + h }), {
+      x: 0, y: 0, ns: 0, nh: 0,
     });
   if (x) {
-    x /= stats.length;
+    x /= ns;
   }
   if (y) {
-    y /= nb;
+    y /= nh;
   }
   const p = Math.sqrt((x ** 2 + y ** 2) / 2);
   debug({ x, y, p });
-  return { x, y, pythoness: p, totalBytes: nb };
+  return { x, y, pythoness: p, s: ns, h: nh };
 };
 
 class Pythoness {
@@ -82,7 +82,7 @@ class Pythoness {
   async getPrivateRepos() {
     const { data } = await this.run({
       method: 'get',
-      url: `/user/repos`,
+      url: `/user/repos?affiliation=owner&sort=pushed`,
     });
     return data;
   }
@@ -90,7 +90,7 @@ class Pythoness {
   async getPublicRepos({ user }) {
     const { data } = await this.run({
       method: 'get',
-      url: `/users/${user}/repos`,
+      url: `/users/${user}/repos?sort=pushed`,
     });
     return data;
   }
@@ -103,22 +103,22 @@ class Pythoness {
     return data;
   }
 
-  async repoPythoness(args) {
+  async repoPythoness({ user }, { name, fork }) {
     let langs;
     try {
-      langs = await this.getLanguages(args);
+      langs = await this.getLanguages({ user, repo: name });
     } catch (e) {
       debug(e);
-      console.error(`Error occured when reading ${args.user}/${args.repo}. Treated as non-exist`);
+      console.error(`Error occured when reading ${user}/${name}. Treated as empty`);
       console.error(e.message);
-      return { pythoness: 0, totalBytes: 0 };
+      return { pythoness: 0, s: fork ? 1 : 100, h: 0 };
     }
     const pyBytes = langs.Python === undefined ? 0 : langs.Python;
-    let totalBytes = 0;
+    let h = 0;
     for (const lang in langs) {
-      totalBytes += langs[lang];
+      h += langs[lang];
     }
-    let pythoness = pyBytes / totalBytes;
+    let pythoness = pyBytes / h;
     const crit = 2 / 3;
     if (!pyBytes) {
       pythoness = 0;
@@ -127,11 +127,8 @@ class Pythoness {
     } else {
       pythoness = 1 - Math.exp(1 + crit / (pythoness - crit));
     }
-    debug({ args, langs, pythoness, pyBytes, totalBytes });
-    return { pythoness, totalBytes };
-  }
-
-  async reposPythoness(repos) {
+    debug({ user, name, fork, langs, pythoness, pyBytes, h });
+    return { pythoness, s: fork ? 20 : 1000, h: fork ? 0 : h };
   }
 
   async userPythoness({ user }, { self, following, followers }) {
@@ -144,13 +141,13 @@ class Pythoness {
       } else {
         repos = await this.getPublicRepos({ user });
       }
-      const stats = await Promise.all(repos.map(({ name }) =>
-        this.repoPythoness({ user, repo: name })));
+      const stats = await Promise.all(repos.map((r) =>
+        this.repoPythoness({ user }, r)));
       res.self = {};
       repos.forEach(({ name }, i) => {
         res.self[name] = stats[i];
       });
-      res.selfStat = congress(stats.filter((r) => r.totalBytes));
+      res.selfStat = congress(stats);
       final += res.selfStat.pythoness ** 2;
       nFinal++;
     }
@@ -180,9 +177,9 @@ class Pythoness {
     }
     res.pythoness = Math.sqrt(final / nFinal);
     if (self) {
-      res.totalBytes = res.selfStat.totalBytes;
+      res.h = res.selfStat.h;
     }
-    debug({ pythoness: res.pythoness, totalBytes: res.totalBytes });
+    debug({ pythoness: res.pythoness, h: res.h });
     return res;
   }
 }

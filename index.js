@@ -79,12 +79,12 @@ const runCheck = async ({ who, self, following, followers }, token) => {
       colWidths: [37, 25, 15, 17],
     });
     for (const r in res.self) {
-      const { pythoness, totalBytes } = res.self[r];
+      const { pythoness, s, h } = res.self[r];
       tbl.push([
         r,
         pythoness,
-        totalBytes ? 1 : 0,
-        totalBytes,
+        s,
+        h,
       ]);
     }
     console.log(tbl.toString());
@@ -100,12 +100,12 @@ const runCheck = async ({ who, self, following, followers }, token) => {
       colWidths: [37, 25, 15, 17],
     });
     for (const r in res.following) {
-      const { pythoness, totalBytes } = res.following[r];
+      const { pythoness, s, h } = res.following[r];
       tbl.push([
         r,
         pythoness,
-        totalBytes ? 1 : 0,
-        totalBytes,
+        s,
+        h,
       ]);
     }
     console.log(tbl.toString());
@@ -121,12 +121,12 @@ const runCheck = async ({ who, self, following, followers }, token) => {
       colWidths: [37, 25, 15, 17],
     });
     for (const r in res.followers) {
-      const { pythoness, totalBytes } = res.followers[r];
+      const { pythoness, s, h } = res.followers[r];
       tbl.push([
         r,
         pythoness,
-        totalBytes ? 1 : 0,
-        totalBytes,
+        s,
+        h,
       ]);
     }
     console.log(tbl.toString());
