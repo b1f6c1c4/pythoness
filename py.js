@@ -178,7 +178,7 @@ class Pythoness {
     res.pythoness = Math.sqrt(final / nFinal);
     if (self) {
       res.h = res.selfStat.h;
-      res.s = res.selfStat.s;
+      res.s = res.selfStat.h ? 1000 : 10;
     }
     debug({ pythoness: res.pythoness, s: res.s, h: res.h });
     return res;
