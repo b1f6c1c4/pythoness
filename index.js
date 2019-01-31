@@ -21,32 +21,56 @@ const path = require('path');
 const fs = require('fs');
 const yargRoot = require('yargs');
 const debug = require('debug')('pythoness');
+const Pythoness = require('./py');
 
-const readToken = ({ token, tokenFile }) => {
+const readToken = ({ public, token, tokenFile }) => {
+  const def = path.join(os.homedir(), '.pythoness');
+  if (public === undefined && token === undefined && tokenFile === undefined) {
+    if (fs.existsSync(def)) {
+      public = false;
+      tokenFile = def;
+    } else {
+      public = true;
+    }
+  }
+  if (public) {
+    if (token !== undefined || tokenFile !== undefined) {
+      console.error('--public implies no token');
+      process.exit(1);
+    }
+    return undefined;
+  }
   if (token) {
     return token;
+  }
+  if (tokenFile === undefined) {
+    tokenFile = def;
   }
   try {
     return fs.readFileSync(tokenFile, 'utf-8').trim();
   } catch (e) {
     console.error(`Error occured during reading token file ${tokenFile}.`);
     console.error('Please check its existance and permission.');
+    process.exit(1);
     return undefined;
   }
 }
 
-const check = async ({ }, token) => {
-  debug({ });
-  // TODO
+const runCheck = async ({ who, self, following, follower }, token) => {
+  const py = new Pythoness({ token });
+  if (!who) {
+    if (token) {
+      who = await py.getMe();
+    } else {
+      throw new Error('<who> is not specified, nor <token>.');
+    }
+  }
+  debug({ who, self, following, follower });
 }
-
-const defaultTokenFile = path.join(os.homedir(), '.pythoness');
-const hasDefaultTokenFile = fs.existsSync(defaultTokenFile);
 
 module.exports = yargRoot
   .option('token-file', {
     describe: 'Github token file for private repo access, see https://github.com/settings/tokens',
-    default: hasDefaultTokenFile ? defaultTokenFile : undefined,
     type: 'string',
   })
   .option('t', {
@@ -57,12 +81,9 @@ module.exports = yargRoot
   .option('public', {
     describe: 'Ignore all private repos (so a token is unnecessary)',
     type: 'boolean',
-    default: !hasDefaultTokenFile,
   })
-  .conflicts('public', 't')
-  .conflicts('public', 'token-file')
   .conflicts('t', 'token-file')
-  .command(['check <who>', '$0'], 'Check pythoness of a Github user', (yargs) => {
+  .command(['check [<who>]', '$0'], 'Check pythoness of a Github user', (yargs) => {
     yargs
       .option('s', {
         alias: 'self',
@@ -85,19 +106,15 @@ module.exports = yargRoot
       .positional('who', {
         describe: 'Github username',
         type: 'string',
-        demandCommand: true,
       });
   }, (argv) => {
-    const { public } = argv;
-    const token = public ? undefined : readToken(argv);
-    if (!public && !token) {
-      return;
-    }
+    const token = readToken(argv);
     runCheck(argv, token).catch((e) => {
       console.error(e.message);
       if (e.response) {
         console.error(e.response.data);
       }
+      process.exit(1);
     });
   })
   .help()
