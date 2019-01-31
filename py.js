@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { TaskQueue } = require('cwait');
 const debug = require('debug')('pythoness');
 
 const congress = (stats) => {
@@ -37,6 +38,8 @@ class Pythoness {
       }
       return Promise.reject(e);
     });
+    this.queue = new TaskQueue(Promise, 32);
+    this.run = this.queue.wrap(this.run.bind(this));
   }
 
   run(cfg) {
@@ -101,7 +104,15 @@ class Pythoness {
   }
 
   async repoPythoness(args) {
-    const langs = await this.getLanguages(args);
+    let langs;
+    try {
+      langs = await this.getLanguages(args);
+    } catch (e) {
+      debug(e);
+      console.error(`Error occured when reading ${args.user}/${args.repo}. Treated as non-exist`);
+      console.error(e.message);
+      return { pythoness: 0, totalBytes: 0 };
+    }
     const pyBytes = langs.Python === undefined ? 0 : langs.Python;
     let totalBytes = 0;
     for (const lang in langs) {
@@ -117,7 +128,7 @@ class Pythoness {
       pythoness = 1 - Math.exp(1 + crit / (pythoness - crit));
     }
     debug({ args, langs, pythoness, pyBytes, totalBytes });
-    return { pythoness, pyBytes, totalBytes };
+    return { pythoness, totalBytes };
   }
 
   async reposPythoness(repos) {
