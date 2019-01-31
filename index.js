@@ -21,6 +21,7 @@ const path = require('path');
 const fs = require('fs');
 const yargRoot = require('yargs');
 const debug = require('debug')('pythoness');
+const Table = require('cli-table');
 const Pythoness = require('./py');
 
 const readToken = ({ public, token, tokenFile }) => {
@@ -66,7 +67,74 @@ const runCheck = async ({ who, self, following, followers }, token) => {
     }
   }
   debug({ who, self, following, followers });
-  await py.userPythoness({ user: who }, { self, following, followers });
+  const res = await py.userPythoness({ user: who }, { self, following, followers });
+  console.log('='.repeat(110));
+  console.log(`Pythoness Report for ${who}`);
+  if (self) {
+    console.log('='.repeat(110));
+    console.log('Repos:');
+    const tbl = new Table({
+      chars: {'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': ''},
+      head: ['Repo', 'Pythoness', 'Senate Seats', 'The House Seats'],
+      colWidths: [37, 25, 15, 17],
+    });
+    for (const r in res.self) {
+      const { pythoness, totalBytes } = res.self[r];
+      tbl.push([
+        r,
+        pythoness,
+        totalBytes ? 1 : 0,
+        totalBytes,
+      ]);
+    }
+    console.log(tbl.toString());
+    console.log(`  Senate votes: ${res.selfStat.x} House votes: ${res.selfStat.y}`);
+    console.log(`  Self pythoness: ${res.selfStat.pythoness}`);
+  }
+  if (following) {
+    console.log('='.repeat(110));
+    console.log('Following:');
+    const tbl = new Table({
+      chars: {'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': ''},
+      head: ['User', 'Pythoness', 'Senate Seats', 'The House Seats'],
+      colWidths: [37, 25, 15, 17],
+    });
+    for (const r in res.following) {
+      const { pythoness, totalBytes } = res.following[r];
+      tbl.push([
+        r,
+        pythoness,
+        totalBytes ? 1 : 0,
+        totalBytes,
+      ]);
+    }
+    console.log(tbl.toString());
+    console.log(`  Senate votes: ${res.followingStat.x} House votes: ${res.followingStat.y}`);
+    console.log(`  Following pythoness: ${res.followingStat.pythoness}`);
+  }
+  if (followers) {
+    console.log('='.repeat(110));
+    console.log('Followers:');
+    const tbl = new Table({
+      chars: {'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': ''},
+      head: ['User', 'Pythoness', 'Senate Seats', 'The House Seats'],
+      colWidths: [37, 25, 15, 17],
+    });
+    for (const r in res.followers) {
+      const { pythoness, totalBytes } = res.followers[r];
+      tbl.push([
+        r,
+        pythoness,
+        totalBytes ? 1 : 0,
+        totalBytes,
+      ]);
+    }
+    console.log(tbl.toString());
+    console.log(`  Senate votes: ${res.followersStat.x} House votes: ${res.followersStat.y}`);
+    console.log(`  Following pythoness: ${res.followersStat.pythoness}`);
+  }
+  console.log('='.repeat(110));
+  console.log(`The Final Pythoness of ${who} is: ${res.pythoness}`);
 }
 
 module.exports = yargRoot

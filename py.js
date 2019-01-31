@@ -121,8 +121,6 @@ class Pythoness {
   }
 
   async reposPythoness(repos) {
-    const stats = await Promise.all(repos.map(this.repoPythoness.bind(this)));
-    return congress(stats.filter((r) => r.totalBytes));
   }
 
   async userPythoness({ user }, { self, following, followers }) {
@@ -135,32 +133,43 @@ class Pythoness {
       } else {
         repos = await this.getPublicRepos({ user });
       }
-      res.self = await this.reposPythoness(repos.map(({ name }) =>
-        ({ user, repo: name })));
-      final += res.self.pythoness ** 2;
+      const stats = await Promise.all(repos.map(({ name }) =>
+        this.repoPythoness({ user, repo: name })));
+      res.self = {};
+      repos.forEach(({ name }, i) => {
+        res.self[name] = stats[i];
+      });
+      res.selfStat = congress(stats.filter((r) => r.totalBytes));
+      final += res.selfStat.pythoness ** 2;
       nFinal++;
     }
     if (following) {
       const fos = await this.getFollowing({ user });
       const stats = await Promise.all(fos.map(({ login }) =>
         this.userPythoness({ user: login }, { self: true })));
-      res.following = stats;
-      res.followingStats = congress(stats);
-      final += res.following.pythoness ** 2;
+      res.following = {};
+      fos.forEach(({ login }, i) => {
+        res.following[login] = stats[i];
+      });
+      res.followingStat = congress(stats);
+      final += res.followingStat.pythoness ** 2;
       nFinal++;
     }
     if (followers) {
       const fos = await this.getFollowers({ user });
       const stats = await Promise.all(fos.map(({ login }) =>
         this.userPythoness({ user: login }, { self: true })));
-      res.follower = stats;
-      res.followerStats = congress(stats);
-      final += res.followers.pythoness ** 2;
+      res.followers = {};
+      fos.forEach(({ login }, i) => {
+        res.followers[login] = stats[i];
+      });
+      res.followersStat = congress(stats);
+      final += res.followersStat.pythoness ** 2;
       nFinal++;
     }
     res.pythoness = Math.sqrt(final / nFinal);
     if (self) {
-      res.totalBytes = res.self.totalBytes;
+      res.totalBytes = res.selfStat.totalBytes;
     }
     debug({ pythoness: res.pythoness, totalBytes: res.totalBytes });
     return res;
