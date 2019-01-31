@@ -24,28 +24,9 @@ const debug = require('debug')('pythoness');
 const Table = require('cli-table');
 const Pythoness = require('./py');
 
-const readToken = ({ public, token, tokenFile }) => {
-  const def = path.join(os.homedir(), '.pythoness');
-  if (public === undefined && token === undefined && tokenFile === undefined) {
-    if (fs.existsSync(def)) {
-      public = false;
-      tokenFile = def;
-    } else {
-      public = true;
-    }
-  }
-  if (public) {
-    if (token !== undefined || tokenFile !== undefined) {
-      console.error('--public implies no token');
-      process.exit(1);
-    }
-    return undefined;
-  }
+const readToken = ({ token, tokenFile }) => {
   if (token) {
     return token;
-  }
-  if (tokenFile === undefined) {
-    tokenFile = def;
   }
   try {
     return fs.readFileSync(tokenFile, 'utf-8').trim();
@@ -57,17 +38,22 @@ const readToken = ({ public, token, tokenFile }) => {
   }
 }
 
-const runCheck = async ({ who, self, following, followers }, token) => {
+const runCheck = async ({ public, who, self, following, followers }, token) => {
   const py = new Pythoness({ token });
+  const me = await py.getMe();
   if (!who) {
-    if (token) {
-      who = await py.getMe();
-    } else {
-      throw new Error('<who> is not specified, nor <token>.');
-    }
+    who = me;
   }
-  debug({ who, self, following, followers });
-  const res = await py.userPythoness({ user: who }, { self, following, followers });
+  if (who !== me) {
+    if (public === false) {
+      throw new Error('You can\' access other\'s private repo');
+    }
+    public = true;
+  } else {
+    public = false;
+  }
+  debug({ public, who, self, following, followers });
+  const res = await py.userPythoness({ user: who, publicOnly: public }, { self, following, followers });
   console.log('='.repeat(110));
   console.log(`Pythoness Report for ${who}`);
   if (self) {
@@ -141,6 +127,7 @@ module.exports = yargRoot
   .strict()
   .option('token-file', {
     describe: 'Github token file for private repo access, see https://github.com/settings/tokens',
+    default: path.join(os.homedir(), '.pythoness'),
     type: 'string',
   })
   .option('t', {
@@ -149,7 +136,7 @@ module.exports = yargRoot
     type: 'string',
   })
   .option('public', {
-    describe: 'Ignore all private repos (so a token is unnecessary)',
+    describe: 'Ignore all private repos',
     type: 'boolean',
   })
   .conflicts('t', 'token-file')

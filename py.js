@@ -82,7 +82,7 @@ class Pythoness {
   async getPrivateRepos() {
     const { data } = await this.run({
       method: 'get',
-      url: `/user/repos?affiliation=owner&sort=pushed`,
+      url: `/user/repos?visibility=all&affiliation=owner&sort=pushed`,
     });
     return data;
   }
@@ -131,12 +131,12 @@ class Pythoness {
     return { pythoness, s: fork ? 20 : 1000, h: fork ? 0 : h };
   }
 
-  async userPythoness({ user }, { self, following, followers }) {
+  async userPythoness({ publicOnly, user }, { self, following, followers }) {
     const res = {};
     let final = 0, nFinal = 0;
     if (self) {
       let repos;
-      if (!user) {
+      if (!publicOnly) {
         repos = await this.getPrivateRepos();
       } else {
         repos = await this.getPublicRepos({ user });

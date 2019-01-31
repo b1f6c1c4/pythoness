@@ -20,8 +20,9 @@
 npm i -g pythoness
 # Generate a token at https://github.com/settings/tokens
 echo the-token > ~/.pythoness
-pythoness             # Check your daily Pythoness
-pythoness b1f6c1c4    # How Pythonic another user is?
+pythoness             # Check your daily Pythoness, public & private
+pythoness --public    # Check your daily Pythoness, public repo only
+pythoness b1f6c1c4    # How Pythonic another user is? (public only)
 ```
 
 ## Installation
@@ -45,10 +46,11 @@ Positionals:
 Options:
   --version        Show version number                                 [boolean]
   --token-file     Github token file for private repo access, see
-                   https://github.com/settings/tokens                   [string]
+                   https://github.com/settings/tokens
+                                              [string] [default: "~/.pythoness"]
   -t, --token      Github token for private repo access, see
                    https://github.com/settings/tokens                   [string]
-  --public         Ignore all private repos (so a token is unnecessary)[boolean]
+  --public         Ignore all private repos                            [boolean]
   --help           Show help                                           [boolean]
   -s, --self       Check their own repos               [boolean] [default: true]
   -f, --following  Check following's repos (depth=1)   [boolean] [default: true]
