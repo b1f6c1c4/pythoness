@@ -2,15 +2,16 @@ const axios = require('axios');
 const debug = require('debug')('pythoness');
 
 const congress = (stats) => {
-  if (!stats.length) {
-    return { x: 0, y: 0, pythoness: 0, totalBytes: 0 };
-  }
   let { x, y, nb } = stats.reduce(({ x, y, nb }, { pythoness, totalBytes }) =>
     ({ x: x + pythoness, y: y + pythoness * totalBytes, nb: nb + totalBytes }), {
       x: 0, y: 0, nb: 0,
     });
-  x /= stats.length;
-  y /= nb;
+  if (x) {
+    x /= stats.length;
+  }
+  if (y) {
+    y /= nb;
+  }
   const p = Math.sqrt((x ** 2 + y ** 2) / 2);
   debug({ x, y, p });
   return { x, y, pythoness: p, totalBytes: nb };
@@ -101,7 +102,6 @@ class Pythoness {
 
   async repoPythoness(args) {
     const langs = await this.getLanguages(args);
-    debug({ args, langs });
     const pyBytes = langs.Python === undefined ? 0 : langs.Python;
     let totalBytes = 0;
     for (const lang in langs) {
@@ -116,13 +116,13 @@ class Pythoness {
     } else {
       pythoness = 1 - Math.exp(1 + crit / (pythoness - crit));
     }
-    debug({ args, pythoness, pyBytes, totalBytes });
+    debug({ args, langs, pythoness, pyBytes, totalBytes });
     return { pythoness, pyBytes, totalBytes };
   }
 
   async reposPythoness(repos) {
     const stats = await Promise.all(repos.map(this.repoPythoness.bind(this)));
-    return congress(stats);
+    return congress(stats.filter((r) => r.totalBytes));
   }
 
   async userPythoness({ user }, { self, following, followers }) {
