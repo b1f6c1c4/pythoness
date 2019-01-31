@@ -49,7 +49,7 @@ const runCheck = async ({ public, who, self, following, followers }, token) => {
       throw new Error('You can\' access other\'s private repo');
     }
     public = true;
-  } else {
+  } else if (public === undefined) {
     public = false;
   }
   debug({ public, who, self, following, followers });
