@@ -56,7 +56,7 @@ const readToken = ({ public, token, tokenFile }) => {
   }
 }
 
-const runCheck = async ({ who, self, following, follower }, token) => {
+const runCheck = async ({ who, self, following, followers }, token) => {
   const py = new Pythoness({ token });
   if (!who) {
     if (token) {
@@ -65,7 +65,8 @@ const runCheck = async ({ who, self, following, follower }, token) => {
       throw new Error('<who> is not specified, nor <token>.');
     }
   }
-  debug({ who, self, following, follower });
+  debug({ who, self, following, followers });
+  await py.userPythoness({ user: who }, { self, following, followers });
 }
 
 module.exports = yargRoot
@@ -98,10 +99,10 @@ module.exports = yargRoot
         default: true,
       })
       .option('F', {
-        alias: 'follower',
+        alias: 'followers',
         describe: 'Check followers\' repos (depth=1)',
         type: 'boolean',
-        default: false,
+        default: true,
       })
       .positional('who', {
         describe: 'Github username',
@@ -110,6 +111,7 @@ module.exports = yargRoot
   }, (argv) => {
     const token = readToken(argv);
     runCheck(argv, token).catch((e) => {
+      debug(e);
       console.error(e.message);
       if (e.response) {
         console.error(e.response.data);
