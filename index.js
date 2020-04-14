@@ -17,6 +17,7 @@
  *
  */
 const os = require('os');
+const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
 const yargRoot = require('yargs');
@@ -141,6 +142,28 @@ const runCheck = async ({ public, who, self, star, following, followers }, token
   console.log(`The Final Pythoness of ${who} is: ${res.pythoness}`);
 }
 
+const runLimit = async (token) => {
+  const { data } = await axios({
+    method: 'get',
+    url: 'https://api.github.com/rate_limit',
+    timeout: 10000,
+    headers: { Authorization: 'token ' + token },
+  });
+  function fix(o) {
+    const r = {};
+    for (let k in o) {
+      if (k === 'reset')
+        r[k] = new Date(o[k] * 1000);
+      else if (typeof o[k] === 'object')
+        r[k] = fix(o[k]);
+      else
+        r[k] = o[k];
+    }
+    return r;
+  }
+  console.log(fix(data));
+};
+
 module.exports = yargRoot
   .strict()
   .option('token-file', {
@@ -158,6 +181,18 @@ module.exports = yargRoot
     type: 'boolean',
   })
   .conflicts('t', 'token-file')
+  .command(['show-limit', '$0'], 'Show GitHub API usage and limit', (yargs) => {
+  }, (argv) => {
+    const token = readToken(argv);
+    runLimit(token).catch((e) => {
+      debug(e);
+      console.error(e.message);
+      if (e.response) {
+        console.error(e.response.data);
+      }
+      process.exit(1);
+    });
+  })
   .command(['check [<who>]', '$0'], 'Check pythoness of a Github user', (yargs) => {
     yargs
       .option('s', {

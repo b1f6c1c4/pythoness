@@ -38,7 +38,8 @@ pythoness [<who>]
 Check pythoness of a Github user
 
 Commands:
-  pythoness check [<who>]  Check pythoness of a Github user            [default]
+  pythoness.js show-limit     Show GitHub API usage and limit
+  pythoness.js check [<who>]  Check pythoness of a Github user         [default]
 
 Positionals:
   who  Github username                                                  [string]
